@@ -301,7 +301,7 @@ export default function Home() {
             <h1
               style={{
                 color: "black",
-                fontSize: "48px",
+                fontSize: "36px",
                 marginBlockEnd: "0px",
                 marginBlockStart: isDesktop ? ".67em" : "0px",
               }}
@@ -310,8 +310,8 @@ export default function Home() {
             </h1>
             <Box
               style={{
-                paddingRight: isDesktop ? "0px" : "16px",
-                paddingLeft: isDesktop ? "0px" : "16px",
+                paddingRight: isDesktop ? "0px" : "8px",
+                paddingLeft: isDesktop ? "0px" : "8px",
                 textAlign: isDesktop ? "left" : "center",
               }}
             >
@@ -320,41 +320,8 @@ export default function Home() {
                 This project is piloting Metaplex's Fusion protocol and consists of 10K unique bases that traits can be added to later.
               </p>
             </Box>
-            <h2
-              style={{
-                color: "grey",
-                marginBottom: isDesktop ? "64px" : "0px",
-                marginBlockStart: "0px",
-                fontWeight: 600,
-                fontSize: "24px",
-              }}
-            >
-              <>{tokenPrice.toLocaleString()} $CRUMB per NFT</>
-            </h2>
-            <h2
-              style={{
-                color: "grey",
-                marginBottom: isDesktop ? "64px" : "0px",
-                marginBlockStart: "0px",
-                fontWeight: 600,
-                fontSize: "24px",
-              }}
-            >
-              <>OR</>
-            </h2>
-            <h2
-              style={{
-                color: "grey",
-                marginBottom: isDesktop ? "64px" : "0px",
-                marginBlockStart: "0px",
-                fontWeight: 600,
-                fontSize: "24px",
-              }}
-            >
-              <>{solPrice.toLocaleString()} SOL per NFT</>
-            </h2>
             {/* <Countdown date={startTime}> */}
-              <MintContainer>
+            <MintContainer>
                 {(publicKey && userRemaining > 0) && (
                   <MintButton
                     size="large"
@@ -404,6 +371,39 @@ export default function Home() {
                 )} */}
               </MintContainer>
             {/* </Countdown> */}
+            <h2
+              style={{
+                color: "grey",
+                marginBottom: isDesktop ? "64px" : "0px",
+                marginBlockStart: "0px",
+                fontWeight: 600,
+                fontSize: "24px",
+              }}
+            >
+              <>{tokenPrice.toLocaleString()} $CRUMB per NFT</>
+            </h2>
+            <h2
+              style={{
+                color: "grey",
+                marginBottom: isDesktop ? "64px" : "0px",
+                marginBlockStart: "0px",
+                fontWeight: 600,
+                fontSize: "24px",
+              }}
+            >
+              <>OR</>
+            </h2>
+            <h2
+              style={{
+                color: "grey",
+                marginBottom: isDesktop ? "64px" : "0px",
+                marginBlockStart: "0px",
+                fontWeight: 600,
+                fontSize: "24px",
+              }}
+            >
+              <>{solPrice.toLocaleString()} SOL per NFT</>
+            </h2>
           </HeroTitleContainer>
         )}
       </MainBody>
