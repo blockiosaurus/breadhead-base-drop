@@ -43,7 +43,7 @@ export default function App({ Component, pageProps }: AppProps) {
     <>
       <CssBaseline />
       <SnackbarProvider>
-        <ConnectionProvider endpoint={clusterApiUrl(network)}>
+        <ConnectionProvider endpoint={process.env["NEXT_PUBLIC_ENDPOINT"] || "https://api.mainnet-beta.solana.com"}>
           <WalletProvider wallets={wallets} autoConnect>
             <WalletModalProvider>
               <Component {...pageProps} />

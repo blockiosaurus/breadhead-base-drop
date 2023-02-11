@@ -1,4 +1,4 @@
-import { CandyMachine, PublicKey } from "@metaplex-foundation/js";
+import { CandyMachine, DateTime, PublicKey, formatDateTime } from "@metaplex-foundation/js";
 import {
   Box,
   CircularProgress,
@@ -14,6 +14,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useEffect, useMemo, useState } from "react";
+import Countdown from "react-countdown";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useSnackbar } from "notistack";
 
@@ -21,13 +22,20 @@ import {
   guestIdentity,
   Metaplex,
   walletAdapterIdentity,
+  FindNftsByOwnerOutput,
 } from "@metaplex-foundation/js";
 
 export default function Home() {
   const [pageLoading, setPageLoading] = useState<boolean>(true);
   const [candyMachine, setCandyMachine] = useState<CandyMachine | undefined>();
+  const [userTokens, setUserTokens] = useState<FindNftsByOwnerOutput | undefined>();
+  const [userGroupName, setUserGroupName] = useState<string>();
+  const [userGroupNumber, setUserGroupNumber] = useState<number>(2);
+  const [startTime, setStartTime] = useState<Date>();
+  const [userRemaining, setUserRemaining] = useState<number>(0);
   const [itemsRemaining, setItemsRemaining] = useState<string>();
-  const [price, setPrice] = useState<Number>(0);
+  const [tokenPrice, setTokenPrice] = useState<Number>(0);
+  const [solPrice, setSolPrice] = useState<Number>(0);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isFetching, setIsFetching] = useState<boolean>(false);
   const [nftImage, setNftImage] = useState<string>("");
@@ -38,8 +46,11 @@ export default function Home() {
   const { enqueueSnackbar } = useSnackbar();
 
   const isDesktop = useMediaQuery("(min-width: 1200px)");
-  const CM_ID = "5hbBGAP6pgwLKVpQVvwZKR4B1VV8zchHTqggCQBgVCpT";
-  const CM_NAME = "Bonkaplex";
+  // const CM_ID = "9VS1GVnhv6JHgmkkPfu87HHccpaSuoeAY6gfTBs23sfK";
+  const CM_ID = "FLMANM6ZXaMoNgAGEtKgABYhkYjzFrbGr4xtFCReQ8n1";
+  const CM_NAME = "Bread Heads";
+  const BH_COLLECTION = "44jmFBzJEw6hndKToYJtv1dKqey8NkfVbUdMgJaBevGF";
+  const CRUMBS = "Bqf4Ep42BVL6gbFc47WUrV1jWhkPxYVbzqtMHaE7L63F";
 
   const handleClose = () => {
     setIsModalOpen(false);
@@ -49,8 +60,8 @@ export default function Home() {
   const metaplex = useMemo(() => {
     return connection
       ? Metaplex.make(connection)?.use(
-          wallet ? walletAdapterIdentity(wallet.adapter) : guestIdentity()
-        )
+        wallet ? walletAdapterIdentity(wallet.adapter) : guestIdentity()
+      )
       : null;
   }, [wallet, connection]);
 
@@ -62,6 +73,7 @@ export default function Home() {
       const mint = await metaplex?.candyMachines().mint({
         candyMachine,
         collectionUpdateAuthority: candyMachine.authorityAddress,
+        group: "SOL",
       });
 
       const mintResponse = await mint?.response;
@@ -83,7 +95,6 @@ export default function Home() {
   };
 
   const getCandyMachine = async () => {
-    setPageLoading(true);
     try {
       const cmPublicKey = new PublicKey(CM_ID ?? "");
       const candyMachine = await metaplex
@@ -105,21 +116,140 @@ export default function Home() {
       );
     }
 
-    setPageLoading(false);
   };
 
+  const getUserTokens = async () => {
+    try {
+      let tokens = await metaplex?.nfts().findAllByOwner({
+        owner: publicKey as PublicKey,
+      });
+      console.log(tokens);
+      setUserTokens(tokens);
+    } catch (error) {
+      console.log("Fetching User Tokens Error", error);
+      enqueueSnackbar(
+        "Fetching User Tokens Error: Check console logs for more details",
+        {
+          variant: "error",
+          anchorOrigin: { vertical: "top", horizontal: "right" },
+        }
+      );
+    }
+  };
+
+  const getUserLimit = async () => {
+    try {
+      console.log({
+        id: 1,
+        user: publicKey as PublicKey,
+        candyGuard: candyMachine?.candyGuard?.address as PublicKey,
+        candyMachine: candyMachine?.address as PublicKey,
+      });
+      let mintLimitAddress = metaplex?.candyMachines().pdas().mintLimitCounter({
+        id: 1,
+        user: publicKey as PublicKey,
+        candyGuard: candyMachine?.candyGuard?.address as PublicKey,
+        candyMachine: candyMachine?.address as PublicKey,
+      });
+      let data = await metaplex?.connection.getAccountInfo(mintLimitAddress as PublicKey);
+      let mintCount: number = data?.data[0] || 0;
+      let mintLimit: number = candyMachine?.candyGuard?.guards.mintLimit?.limit as number;
+      setUserRemaining(mintLimit - mintCount);
+      console.log("User Remaining: ", userRemaining);
+    } catch (error) {
+      console.log("Fetching User Mint Limit Error", error);
+      enqueueSnackbar(
+        "Fetching User Mint Limit Error: Check console logs for more details",
+        {
+          variant: "error",
+          anchorOrigin: { vertical: "top", horizontal: "right" },
+        }
+      );
+    }
+  };
+
+  const getUserGroup = () => {
+    if (userTokens) {
+      for (let nft of userTokens) {
+        if (nft.collection?.address.toString() === BH_COLLECTION && nft.collection?.verified) {
+          setUserGroupName("HOLDER");
+          setUserGroupNumber(0);
+          console.log("User Group: ", userGroupName);
+          console.log("User Group Number: ", userGroupNumber);
+          return;
+        }
+      }
+
+      for (let nft of userTokens) {
+        if ((nft.model === "metadata" && nft.mintAddress.toString() == CRUMBS) || (nft.model === "nft" && nft.address.toString() == CRUMBS) || (nft.model === "sft" && nft.address.toString() == CRUMBS)) {
+          setUserGroupName("CRUMBS");
+          setUserGroupNumber(1);
+          console.log("User Group: ", userGroupName);
+          console.log("User Group Number: ", userGroupNumber);
+          return;
+        }
+      }
+
+      setUserGroupName("SOL");
+      setUserGroupNumber(2);
+      console.log("User Group: ", userGroupName);
+      console.log("User Group Number: ", userGroupNumber);
+    }
+  };
+
+  const getStartTime = () => {
+    try {
+      if (!candyMachine) throw new Error("No CandyMachine");
+      let time;
+      if (userGroupNumber === 0) {
+        time = candyMachine?.candyGuard?.groups[userGroupNumber].guards.startDate?.date;
+      } else {
+        time = candyMachine?.candyGuard?.guards.startDate?.date;
+      }
+      setStartTime(new Date(formatDateTime(time as DateTime)));
+      console.log("Start Time: ", startTime);
+      console.log("Now: ", new Date(Date.now()));
+    } catch (error) {
+      console.log("Fetching Start Time Error", error);
+      enqueueSnackbar(
+        "Fetching Start Time Error: Check console logs for more details",
+        {
+          variant: "error",
+          anchorOrigin: { vertical: "top", horizontal: "right" },
+        }
+      );
+    }
+  }
+
   useEffect(() => {
+    setPageLoading(true);
     getCandyMachine();
-  }, []);
+    getUserTokens();
+    setPageLoading(false);
+  }, [publicKey]);
 
   useEffect(() => {
     if (!candyMachine) return;
-    const price = Number(
-      candyMachine?.candyGuard?.guards.tokenPayment?.amount.basisPoints.toString()
+    console.log(candyMachine);
+    const tokenPrice = Number(
+      candyMachine?.candyGuard?.groups[1].guards.tokenPayment?.amount.basisPoints.toString()
     );
-    setPrice(price / 1000000000);
-    console.log(price);
-  }, [candyMachine]);
+    setTokenPrice(tokenPrice);
+    console.log(tokenPrice);
+    const solPrice = Number(
+      candyMachine?.candyGuard?.groups[2].guards.solPayment?.amount.basisPoints.toString()
+    );
+    setSolPrice(solPrice / 1000000000);
+    console.log(solPrice);
+
+    getUserGroup();
+    getUserLimit();
+  }, [candyMachine, userTokens, publicKey]);
+
+  useEffect(() => {
+    if (!candyMachine) return;
+    getStartTime();
+  }, [candyMachine, userGroupNumber, publicKey]);
 
   return (
     <PageWrapper>
@@ -145,7 +275,7 @@ export default function Home() {
               width: "100%",
               justifySelf: isDesktop ? "flex-start" : "center",
             }}
-            src="https://bonk-smick.s3.us-east-2.amazonaws.com/bonkagrid.png"
+            src="./breads.gif"
             alt="NFT"
           />
           <p
@@ -185,8 +315,8 @@ export default function Home() {
               }}
             >
               <p style={{ color: "grey" }}>
-                Bonkaplex is a selection of 69 images showcasing what Midjourney
-                thinks of the word “bonk”. All $BONK raised will be burned.
+                Bread Heads are dropping 10K Baby Breads to reward holders and welcome new partners into our community.
+                This project is piloting Metaplex's Fusion protocol and consists of 10K unique bases that traits can be added to later.
               </p>
             </Box>
             <h2
@@ -198,53 +328,81 @@ export default function Home() {
                 fontSize: "24px",
               }}
             >
-              <>{price.toLocaleString()} $BONK per NFT</>
+              <>{tokenPrice.toLocaleString()} $CRUMB per NFT</>
             </h2>
-            <MintContainer>
-              {publicKey ? (
-                <MintButton
-                  size="large"
-                  onClick={onMintClick}
-                  disabled={!candyMachine || !publicKey}
-                >
-                  <p
+            <h2
+              style={{
+                color: "grey",
+                marginBottom: isDesktop ? "64px" : "0px",
+                marginBlockStart: "0px",
+                fontWeight: 600,
+                fontSize: "24px",
+              }}
+            >
+              <>OR</>
+            </h2>
+            <h2
+              style={{
+                color: "grey",
+                marginBottom: isDesktop ? "64px" : "0px",
+                marginBlockStart: "0px",
+                fontWeight: 600,
+                fontSize: "24px",
+              }}
+            >
+              <>{solPrice.toLocaleString()} SOL per NFT</>
+            </h2>
+            <Countdown date={startTime}>
+              <MintContainer>
+                {(startTime?.getTime() && (startTime?.getTime() < Date.now()) && publicKey && userRemaining > 0) && (
+                  <MintButton
+                    size="large"
+                    onClick={onMintClick}
+                    disabled={!candyMachine || !publicKey}
+                  >
+                    <p
+                      style={{
+                        fontSize: "24px",
+                        fontWeight: 600,
+                        textTransform: "none",
+                      }}
+                    >
+                      {publicKey ? "Mint" : "Connect Your Wallet"}
+                    </p>
+                  </MintButton>
+                )}
+                {(!publicKey) && (
+                  <WalletMultiButton
                     style={{
+                      color: "white",
+                      background: "black",
+                      width: "100%",
+                      borderRadius: "100px",
+                      textAlign: "center",
+                      display: "inline-block",
+                      height: "64px",
+                    }}
+                  />
+                )}
+                {candyMachine?.candyGuard?.guards.mintLimit?.limit && (
+                  <h3
+                    style={{
+                      color: "black",
+                      textAlign: "center",
                       fontSize: "24px",
-                      fontWeight: 600,
                       textTransform: "none",
+                      fontWeight: 400,
+                      marginBlockEnd: "0px",
                     }}
                   >
-                    {publicKey ? "Mint" : "Connect Your Wallet"}
-                  </p>
-                </MintButton>
-              ) : (
-                <WalletMultiButton
-                  style={{
-                    color: "white",
-                    background: "black",
-                    width: "100%",
-                    borderRadius: "100px",
-                    textAlign: "center",
-                    display: "inline-block",
-                    height: "64px",
-                  }}
-                />
-              )}
-              {candyMachine?.candyGuard?.guards.mintLimit?.limit && (
-                <h3
-                  style={{
-                    color: "black",
-                    textAlign: "center",
-                    fontSize: "16px",
-                    textTransform: "none",
-                    fontWeight: 400,
-                    marginBlockEnd: "0px",
-                  }}
-                >
-                  {candyMachine?.candyGuard?.guards.mintLimit?.limit} per wallet
-                </h3>
-              )}
-            </MintContainer>
+                    {userRemaining} mints left
+                  </h3>
+                )}
+                {(startTime?.getTime() && (startTime?.getTime() >= Date.now())) && (
+                  <h2>Mint not yet active</h2>
+                )}
+              </MintContainer>
+            </Countdown>
           </HeroTitleContainer>
         )}
       </MainBody>
@@ -290,7 +448,7 @@ const NftModal: React.FC<ModalProps> = ({
           ) : null}
         </Box>
         <DialogTitle>
-          {isFetching ? "Bonking..." : "You've been bonked, enjoy your NFT!"}
+          {isFetching ? "Minting..." : "Mint successful, enjoy your NFT!"}
         </DialogTitle>
         {isFetching ? (
           <DialogContent>
@@ -304,7 +462,7 @@ const NftModal: React.FC<ModalProps> = ({
                 maxWidth: "520px",
                 maxHeight: "520px",
               }}
-              src={process.env["NEXT_PUBLIC_COLLECTION_IMAGE"]}
+              src="./breads.gif"
               alt="NFT"
             />
             Which one will you get?
@@ -333,7 +491,7 @@ const NftModal: React.FC<ModalProps> = ({
 const PageWrapper = styled(Box)(({ theme }) => ({
   height: "100vh",
   width: "100vw",
-  background: "white",
+  background: "#fbf3e7",
   display: "flex",
   flexDirection: "column",
   overflow: "hidden",
