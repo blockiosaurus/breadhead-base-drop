@@ -270,8 +270,8 @@ export default function Home() {
         <ImageBody>
           <img
             style={{
-              maxHeight: "540px",
-              maxWidth: "540px",
+              maxHeight: "400px",
+              maxWidth: "400px",
               height: "100%",
               width: "100%",
               justifySelf: isDesktop ? "flex-start" : "center",
@@ -316,8 +316,7 @@ export default function Home() {
               }}
             >
               <p style={{ color: "grey" }}>
-                Bread Heads are dropping 10K Baby Breads to reward holders and welcome new partners into our community.
-                This project is piloting Metaplex's Fusion protocol and consists of 10K unique bases that traits can be added to later.
+                10K Baby Bread Head Bases to pilot Metaplex's Fusion Protocol.
               </p>
             </Box>
             {/* <Countdown date={startTime}> */}
