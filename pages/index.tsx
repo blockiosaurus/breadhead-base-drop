@@ -28,10 +28,11 @@ import {
 export default function Home() {
   const [pageLoading, setPageLoading] = useState<boolean>(true);
   const [candyMachine, setCandyMachine] = useState<CandyMachine | undefined>();
-  const [userTokens, setUserTokens] = useState<FindNftsByOwnerOutput | undefined>();
-  const [userGroupName, setUserGroupName] = useState<string>();
-  const [userGroupNumber, setUserGroupNumber] = useState<number>(2);
-  const [startTime, setStartTime] = useState<Date>();
+  // const [userTokens, setUserTokens] = useState<FindNftsByOwnerOutput | undefined>();
+  // const [userMint, setUserMint] = useState<PublicKey>();
+  // const [userGroupName, setUserGroupName] = useState<string>();
+  // const [userGroupNumber, setUserGroupNumber] = useState<number>(2);
+  // const [startTime, setStartTime] = useState<Date>();
   const [userRemaining, setUserRemaining] = useState<number>(0);
   const [itemsRemaining, setItemsRemaining] = useState<string>();
   const [tokenPrice, setTokenPrice] = useState<Number>(0);
@@ -73,7 +74,6 @@ export default function Home() {
       const mint = await metaplex?.candyMachines().mint({
         candyMachine,
         collectionUpdateAuthority: candyMachine.authorityAddress,
-        group: "SOL",
       });
 
       const mintResponse = await mint?.response;
@@ -118,24 +118,24 @@ export default function Home() {
 
   };
 
-  const getUserTokens = async () => {
-    try {
-      let tokens = await metaplex?.nfts().findAllByOwner({
-        owner: publicKey as PublicKey,
-      });
-      console.log(tokens);
-      setUserTokens(tokens);
-    } catch (error) {
-      console.log("Fetching User Tokens Error", error);
-      enqueueSnackbar(
-        "Fetching User Tokens Error: Check console logs for more details",
-        {
-          variant: "error",
-          anchorOrigin: { vertical: "top", horizontal: "right" },
-        }
-      );
-    }
-  };
+  // const getUserTokens = async () => {
+  //   try {
+  //     let tokens = await metaplex?.nfts().findAllByOwner({
+  //       owner: publicKey as PublicKey,
+  //     });
+  //     console.log(tokens);
+  //     setUserTokens(tokens);
+  //   } catch (error) {
+  //     console.log("Fetching User Tokens Error", error);
+  //     enqueueSnackbar(
+  //       "Fetching User Tokens Error: Check console logs for more details",
+  //       {
+  //         variant: "error",
+  //         anchorOrigin: { vertical: "top", horizontal: "right" },
+  //       }
+  //     );
+  //   }
+  // };
 
   const getUserLimit = async () => {
     try {
@@ -168,63 +168,64 @@ export default function Home() {
     }
   };
 
-  const getUserGroup = () => {
-    if (userTokens) {
-      for (let nft of userTokens) {
-        if (nft.collection?.address.toString() === BH_COLLECTION && nft.collection?.verified) {
-          setUserGroupName("HOLDER");
-          setUserGroupNumber(0);
-          console.log("User Group: ", userGroupName);
-          console.log("User Group Number: ", userGroupNumber);
-          return;
-        }
-      }
+  // const getUserGroup = () => {
+  //   if (userTokens) {
+  //     for (let nft of userTokens) {
+  //       if (nft.collection?.address.toString() === BH_COLLECTION && nft.collection?.verified) {
+  //         setUserGroupName("HOLDER");
+  //         setUserGroupNumber(0);
+  //         setUserMint(nft.address);
+  //         console.log("User Group: ", userGroupName);
+  //         console.log("User Group Number: ", userGroupNumber);
+  //         return;
+  //       }
+  //     }
 
-      for (let nft of userTokens) {
-        if ((nft.model === "metadata" && nft.mintAddress.toString() == CRUMBS) || (nft.model === "nft" && nft.address.toString() == CRUMBS) || (nft.model === "sft" && nft.address.toString() == CRUMBS)) {
-          setUserGroupName("CRUMBS");
-          setUserGroupNumber(1);
-          console.log("User Group: ", userGroupName);
-          console.log("User Group Number: ", userGroupNumber);
-          return;
-        }
-      }
+  //     for (let nft of userTokens) {
+  //       if ((nft.model === "metadata" && nft.mintAddress.toString() == CRUMBS) || (nft.model === "nft" && nft.address.toString() == CRUMBS) || (nft.model === "sft" && nft.address.toString() == CRUMBS)) {
+  //         setUserGroupName("CRUMBS");
+  //         setUserGroupNumber(1);
+  //         console.log("User Group: ", userGroupName);
+  //         console.log("User Group Number: ", userGroupNumber);
+  //         return;
+  //       }
+  //     }
 
-      setUserGroupName("SOL");
-      setUserGroupNumber(2);
-      console.log("User Group: ", userGroupName);
-      console.log("User Group Number: ", userGroupNumber);
-    }
-  };
+  //     setUserGroupName("SOL");
+  //     setUserGroupNumber(2);
+  //     console.log("User Group: ", userGroupName);
+  //     console.log("User Group Number: ", userGroupNumber);
+  //   }
+  // };
 
-  const getStartTime = () => {
-    try {
-      if (!candyMachine) throw new Error("No CandyMachine");
-      let time;
-      if (userGroupNumber === 0) {
-        time = candyMachine?.candyGuard?.groups[userGroupNumber].guards.startDate?.date;
-      } else {
-        time = candyMachine?.candyGuard?.guards.startDate?.date;
-      }
-      setStartTime(new Date(formatDateTime(time as DateTime)));
-      console.log("Start Time: ", startTime);
-      console.log("Now: ", new Date(Date.now()));
-    } catch (error) {
-      console.log("Fetching Start Time Error", error);
-      enqueueSnackbar(
-        "Fetching Start Time Error: Check console logs for more details",
-        {
-          variant: "error",
-          anchorOrigin: { vertical: "top", horizontal: "right" },
-        }
-      );
-    }
-  }
+  // const getStartTime = () => {
+  //   try {
+  //     if (!candyMachine) throw new Error("No CandyMachine");
+  //     let time;
+  //     if (userGroupNumber === 0) {
+  //       time = candyMachine?.candyGuard?.groups[userGroupNumber].guards.startDate?.date;
+  //     } else {
+  //       time = candyMachine?.candyGuard?.guards.startDate?.date;
+  //     }
+  //     setStartTime(new Date(formatDateTime(time as DateTime)));
+  //     console.log("Start Time: ", startTime);
+  //     console.log("Now: ", new Date(Date.now()));
+  //   } catch (error) {
+  //     console.log("Fetching Start Time Error", error);
+  //     enqueueSnackbar(
+  //       "Fetching Start Time Error: Check console logs for more details",
+  //       {
+  //         variant: "error",
+  //         anchorOrigin: { vertical: "top", horizontal: "right" },
+  //       }
+  //     );
+  //   }
+  // }
 
   useEffect(() => {
     setPageLoading(true);
     getCandyMachine();
-    getUserTokens();
+    // getUserTokens();
     setPageLoading(false);
   }, [publicKey]);
 
@@ -232,24 +233,24 @@ export default function Home() {
     if (!candyMachine) return;
     console.log(candyMachine);
     const tokenPrice = Number(
-      candyMachine?.candyGuard?.groups[1].guards.tokenPayment?.amount.basisPoints.toString()
+      // candyMachine?.candyGuard?.groups[1].guards.tokenPayment?.amount.basisPoints.toString()
     );
-    setTokenPrice(tokenPrice);
+    setTokenPrice(1);
     console.log(tokenPrice);
     const solPrice = Number(
-      candyMachine?.candyGuard?.groups[2].guards.solPayment?.amount.basisPoints.toString()
+      //candyMachine?.candyGuard?.groups[2].guards.solPayment?.amount.basisPoints.toString()
     );
-    setSolPrice(solPrice / 1000000000);
+    setSolPrice(0.1);
     console.log(solPrice);
 
-    getUserGroup();
+    // getUserGroup();
     getUserLimit();
-  }, [candyMachine, userTokens, publicKey]);
+  }, [candyMachine, publicKey]);
 
-  useEffect(() => {
-    if (!candyMachine) return;
-    getStartTime();
-  }, [candyMachine, userGroupNumber, publicKey]);
+  // useEffect(() => {
+  //   if (!candyMachine) return;
+  //   // getStartTime();
+  // }, [candyMachine, userGroupNumber, publicKey]);
 
   return (
     <PageWrapper>
@@ -352,9 +353,9 @@ export default function Home() {
             >
               <>{solPrice.toLocaleString()} SOL per NFT</>
             </h2>
-            <Countdown date={startTime}>
+            {/* <Countdown date={startTime}> */}
               <MintContainer>
-                {(startTime?.getTime() && (startTime?.getTime() < Date.now()) && publicKey && userRemaining > 0) && (
+                {(publicKey && userRemaining > 0) && (
                   <MintButton
                     size="large"
                     onClick={onMintClick}
@@ -398,11 +399,11 @@ export default function Home() {
                     {userRemaining} mints left
                   </h3>
                 )}
-                {(startTime?.getTime() && (startTime?.getTime() >= Date.now())) && (
+                {/* {(startTime?.getTime() && (startTime?.getTime() >= Date.now())) && (
                   <h2>Mint not yet active</h2>
-                )}
+                )} */}
               </MintContainer>
-            </Countdown>
+            {/* </Countdown> */}
           </HeroTitleContainer>
         )}
       </MainBody>
