@@ -66,7 +66,7 @@ export default function Home() {
       : null;
   }, [wallet, connection]);
 
-  const onMintClick = async () => {
+  const onMintCrumbsClick = async () => {
     try {
       if (!candyMachine) throw new Error("No CandyMachine");
       setIsModalOpen(true);
@@ -74,6 +74,36 @@ export default function Home() {
       const mint = await metaplex?.candyMachines().mint({
         candyMachine,
         collectionUpdateAuthority: candyMachine.authorityAddress,
+        group: "CRUMB",
+      });
+
+      const mintResponse = await mint?.response;
+      setIsFetching(false);
+      if (mintResponse) {
+        mint?.nft.json?.image ? setNftImage(mint?.nft.json?.image) : null;
+        mint?.response.signature
+          ? setExplorerLink(`https://solscan.io/tx/${mint?.response.signature}`)
+          : null;
+      }
+      getCandyMachine();
+    } catch (error) {
+      console.error("Mint Error", error);
+      enqueueSnackbar("Mint Error: Check console logs for more details", {
+        variant: "error",
+        anchorOrigin: { vertical: "top", horizontal: "right" },
+      });
+    }
+  };
+
+  const onMintSolClick = async () => {
+    try {
+      if (!candyMachine) throw new Error("No CandyMachine");
+      setIsModalOpen(true);
+      setIsFetching(true);
+      const mint = await metaplex?.candyMachines().mint({
+        candyMachine,
+        collectionUpdateAuthority: candyMachine.authorityAddress,
+        group: "SOL",
       });
 
       const mintResponse = await mint?.response;
@@ -324,7 +354,25 @@ export default function Home() {
                 {(publicKey && userRemaining > 0) && (
                   <MintButton
                     size="large"
-                    onClick={onMintClick}
+                    onClick={onMintCrumbsClick}
+                    disabled={!candyMachine || !publicKey}
+                    style={{ marginBottom: "8px" }}
+                  >
+                    <p
+                      style={{
+                        fontSize: "24px",
+                        fontWeight: 600,
+                        textTransform: "none",
+                      }}
+                    >
+                      {publicKey ? "Mint with CRUMBS" : "Connect Your Wallet"}
+                    </p>
+                  </MintButton>
+                )}
+                {(publicKey && userRemaining > 0) && (
+                  <MintButton
+                    size="large"
+                    onClick={onMintSolClick}
                     disabled={!candyMachine || !publicKey}
                   >
                     <p
@@ -334,7 +382,7 @@ export default function Home() {
                         textTransform: "none",
                       }}
                     >
-                      {publicKey ? "Mint" : "Connect Your Wallet"}
+                      {publicKey ? "Mint with SOL" : "Connect Your Wallet"}
                     </p>
                   </MintButton>
                 )}
@@ -401,8 +449,7 @@ export default function Home() {
                 fontSize: "24px",
               }}
             >
-              {/* <>{solPrice.toLocaleString()} SOL per NFT</> */}
-              <>SOL Mint coming soon</>
+              <>{solPrice.toLocaleString()} SOL per NFT</>
             </h2>
           </HeroTitleContainer>
         )}
