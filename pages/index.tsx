@@ -401,7 +401,8 @@ export default function Home() {
                 fontSize: "24px",
               }}
             >
-              <>{solPrice.toLocaleString()} SOL per NFT</>
+              {/* <>{solPrice.toLocaleString()} SOL per NFT</> */}
+              <>SOL Mint coming soon</>
             </h2>
           </HeroTitleContainer>
         )}
